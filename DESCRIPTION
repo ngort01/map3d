@@ -1,0 +1,16 @@
+Package: map3d
+Type: Package
+Title: 3D plotting methods for spatial data on maps
+Version: 1.0
+Date: 2013-08-05
+Author: Nikolai Gorte
+Maintainer: Nikolai Gorte <n.gorte@gmail.com>
+Description: A package that provides methods to plot spatial data with
+    and without attributes on a map in 3D.
+Depends: rgl, OpenStreetMap, R (>= 2.5.0)
+Imports: methods
+Collate: 'map3d-package.R' 'map3d.R' 'spplot3d.R' 'SpatialPoints.R'
+        'SpatialPolygons.R' 'SpatialGrid.R' 'SpatialLines.R'
+        'Data-gewaesserlinien.R' 'Data-vg2500_bld.R'
+License: GPL (>= 2)
+Packaged: 2013-11-26 14:22:28 UTC; Niko

@@ -1,0 +1,2 @@
+exportMethods(map3d)
+exportMethods(spplot3d)

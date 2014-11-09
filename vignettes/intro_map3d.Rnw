@@ -1,0 +1,258 @@
+\documentclass{article}
+% \VignetteIndexEntry{map3d: 3D plotting methods for spatial data}
+
+\usepackage{Sweave}
+\usepackage{float} 
+
+\title{map3d \\ 3D plotting methods for spatial data}
+\author{Nikolai Gorte}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+The {\tt map3d} package provides basic methods for plotting spatial data 
+on maps from the {\tt OpenStreetMap} package using the {\tt RGL} package.
+This combination allows the creation of interactive, 3D plots of spatial
+data on a map.
+\\ Spatial data refers to points, lines, polygons and grids each of them 
+with or without attributes as implemented in the spatial data classes in
+{\tt sp}.
+
+The motivation for this package was to give the user a nice visualization 
+of spatial data (plotting it on a map) and maybe a way to inetract with it,
+which has led to the use of {\tt RGL}.
+
+This vignette describes the methods provided by {\tt map3d} and also shortly
+describes some of the packages {\tt map3d} depends on.
+
+\section{OpenStreetMap - package}
+
+The {\tt OpenStreetMap} package provides high resolution map and satellite
+data for use in R. It currently supports maps from OSM, Bing, Waze, Mapquest,
+Maptoolkit, MapQuest, stamen, MapBox, ESRI, NPS, Apple, skobbler, OpenCycleMap 
+and CloudMade. 
+A very nice feature which has led to the use of the {\tt OpenStreetMap} package
+is the support of transformations between spatial coordinate systems.
+
+\section{RGL - package}
+
+{\tt RGL} extends {\tt R} with a 3D real-time visualization Device System.
+It is written in C++ using OpenGL.
+\\ It offers three-dimensional, real-time visualization functionality and
+therefore allows the user to generate interactive 3D graphics.
+
+In this package {\tt RGL} is used to visualize maps and spatial data to give 
+the user a nicer view on the data and the possibility to interact with the 
+graphics e.g. rotate or zoom.
+
+\section{Methods}
+
+This section describes the methods in {\tt map3d} and shows some examples.
+
+<<echo=FALSE>>=
+library(map3d)
+@
+
+
+\subsection{map3d}
+
+The {\tt map3d} method creates a 3D {\tt RGL} plot of a map object.
+\\{\tt map3d} uses the color matrix and bounding box of the OpenStreetMap map
+object to create a surface using the {\tt surface3d} function from {\tt RGL}.
+
+<<echo=TRUE>>= 
+map <- openmap(c(52.05, 7.5), c(51.9, 7.75),12, type="osm")
+# Reproject if you want. Takes some time!
+map <- openproj(map, CRS("+init=EPSG:4326"))
+map3d(map)
+@
+
+\begin{figure}[h]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>=
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 1)
+map3d(map, open3d = FALSE)
+@
+\caption{3D plot of a reprojected map object}
+\end{center}
+\end{figure}
+
+
+
+\subsection{spplot3d}
+
+{\tt spplot3d} is the main method of this package. It takes a spatial object 
+and plots it on a map.
+\\The method automatically gets the rigth map section using the bounding box
+of the spatial object and plots it on the map. It supports spatial data with
+and without attributes and and also CRS transformation.
+\\Since {\tt RGL} does not include any methods to create legends, the legend
+is shown as a normal {\tt R} plot.
+
+\subsubsection{Points}
+
+Example plots of a {\tt SpatialPointsDataFrame}.
+
+<<echo=TRUE, pdf=FALSE>>=
+crs = CRS("+init=epsg:28992 +proj=sterea +lat_0=52.15616055555555 
+          +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 
+          +y_0=463000 +ellps=bessel 
+          +towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 
+          +units=m +no_defs")
+## create SpatialPointsDataFrame
+data("meuse")
+coordinates(meuse) <- ~x+y
+proj4string(meuse) <- crs
+## plot
+spplot3d(meuse, att = "zinc", grid = TRUE)
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>= 
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 0.95)
+spplot3d(meuse, att = "zinc", grid=TRUE, open3d = FALSE)
+@
+\caption{Spatial points with attributes}
+\end{center}
+\end{figure}
+
+As you can see in the previous plot, the points are plotted on the map and
+the color of the points represents the chosen attribute (in this case the zinc concentration).
+The colors are chosen automatically, but you can also define them by yourself
+as shown in the following plot.
+
+<<echo=TRUE, pdf=FALSE>>= 
+spplot3d(meuse, att = "zinc", col = c("yellow", "red"), type = "bing")
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>=
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 0.95)
+spplot3d(meuse, att = "zinc", col = c("yellow", "red"), type="bing", open3d = FALSE)
+@
+\caption{Spatial points with attributes and custom colors}
+\end{center}
+\end{figure}
+
+\subsubsection{Lines}
+
+Example plots of a {\tt SpatialLinesDataFrame}.
+
+<<echo=TRUE, pdf=FALSE>>=
+data("gewaesserlinien")
+spplot3d(gewaesserlinien, "glName", col = c("blue", "cyan"), CRS = CRS("+init=EPSG:4326"))
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>=
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 1)
+spplot3d(gewaesserlinien, "glName", col = c("blue", "cyan"), CRS = CRS("+init=EPSG:4326"), open3d = FALSE)
+@
+\caption{Spatial lines with attributes and custom colors}
+\end{center}
+\end{figure}
+
+\subsubsection{Polygons}
+
+Polygons are supported in {\tt RGL}, but the triangulation of the polygons 
+is extremly time consuming, which is the reason why polygons in this package
+are plotted using lines.
+Unfortunately because of this polygons can't be filled and numeric attributes are 
+represented by the height of segments plotted in the centers of the
+polygons as shown in the following example.
+
+<<echo=TRUE, pdf=FALSE>>=
+data("vg2500_bld")
+spplot3d(vg2500_bld, "SHAPE_AREA", CRS = CRS("+init=EPSG:4326"))
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>=
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 1)
+spplot3d(vg2500_bld, "SHAPE_AREA", CRS = CRS("+init=EPSG:4326"), open3d = FALSE)
+@
+\caption{Spatial polygons with attributes}
+\end{center}
+\end{figure}
+
+\subsubsection{Grids}
+
+Example plot of a {\tt SpatialGridDataFrame}.
+
+<<echo=TRUE, pdf=FALSE>>=
+data("meuse.grid")
+coordinates(meuse.grid) <- ~x+y
+gridded(meuse.grid) <- TRUE
+proj4string(meuse.grid) <- crs
+spplot3d(meuse.grid, att = "ffreq", col = c("red", "blue", "green"), 
+         CRS = CRS("+init=EPSG:4326"))
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>=
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 0.9)
+spplot3d(meuse.grid, att = "ffreq", col = c("red", "blue", "green"), CRS = CRS("+init=EPSG:4326"), open3d = FALSE)
+@
+\caption{Spatial grid with attributes and CRS transformation}
+\end{center}
+\end{figure}
+
+\subsection{ADD - functionality}
+
+The {\tt ADD} functionality allows to add spatial objects to an existing plot.
+To do this you have to specify the {\tt CRS} used in the plot you want to add 
+objects to.
+Following example shows this procedure.
+
+<<echo=TRUE, pdf=FALSE>>=
+data("meuse.riv")
+meuse.riv <- SpatialPolygons(list(Polygons(list(Polygon(meuse.riv)),"meuse.riv")))
+proj4string(meuse.riv) <- crs
+## First plot, ADD = FALSE
+spplot3d(meuse.riv, col = "blue", CRS = CRS("+init=EPSG:4326"))
+## Add SpatialPoints and SpatialGrid
+spplot3d(meuse, "zinc", ADD = TRUE, CRS = CRS("+init=EPSG:4326"))
+spplot3d(meuse.grid, "dist", col=c("black", "white"), ADD = TRUE, 
+         CRS = CRS("+init=EPSG:4326"))
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, fig=TRUE, grdevice=rgl.Sweave, pdf=FALSE, resolution=72>>=
+par3d("userMatrix" = matrix(c(1,0,0,0, 0,0.7,0.7,0, 0,-0.7,0.7,0, 0,0,0,1), 
+                            nrow = 4, ncol = 4, byrow = TRUE))
+par3d("zoom" = 0.95)
+## First plot, ADD = FALSE
+spplot3d(meuse.riv, col = "blue", CRS =CRS("+init=EPSG:4326"), open3d = FALSE)
+## Add SpatialPoints and SpatialGrid
+spplot3d(meuse, "zinc", ADD = TRUE, CRS = CRS("+init=EPSG:4326"), open3d = FALSE)
+spplot3d(meuse.grid, "dist", col = c("black", "white"), ADD = TRUE, CRS = CRS("+init=EPSG:4326"), open3d = FALSE)
+@
+\caption{Polygon, points and grid in one plot.}
+\end{center}
+\end{figure}
+
+\end{document}
